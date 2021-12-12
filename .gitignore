@@ -1,3 +1,6 @@
 /venv/
 /data/
-/10_eps.csv
+/saved_files/10_eps.csv
+.idea/
+__pycache__/
+/saved_files/

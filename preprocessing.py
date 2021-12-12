@@ -6,36 +6,32 @@ import numpy as np
 import el_core_news_md
 
 nlp = el_core_news_md.load()
-MAX_LEN = 25
-VOCAB_SIZE = 20000
-EMBEDDING_DIM = 300
 
 
-def clean_text(text):
-
+def clean_text(text_list):
+    """Takes a list of greek sequences, converts to lowercase and strips punctuation and notation"""
+    text_ = []
     d = {ord('\N{COMBINING ACUTE ACCENT}'): None}
-    text = text.lower()
-    text = text.translate(str.maketrans('', '', string.punctuation))
-    text = unicodedata.normalize('NFD', text).translate(d)
-
-    return text
-
-cleaned_text = clean_text('ήξερα,  7 το Κάνουμε ήξερα  4 τι να Κάνουμε τώρα?')
-print(cleaned_text)
+    for text in text_list:
+        text = text.lower()
+        text = text.translate(str.maketrans('', '', string.punctuation))
+        text = unicodedata.normalize('NFD', text).translate(d)
+        text_.append(text)
+    return text_
 
 
 def tag_start_end_sentences(decoder_input_sentence):
+    """Takes the targets list and tags start <BOS> and end <EOS>"""
     bos = "<BOS>"
     eos = "<EOS>"
     final_target = [bos + text + eos for text in decoder_input_sentence]
     return final_target
 
-text = tag_start_end_sentences([cleaned_text])
-print(text)
 
-
-def vocab_creator(text_lists, VOCAB_SIZE):
-    tokenizer = Tokenizer(num_words=VOCAB_SIZE)
+def vocab_creator(text_lists, vocab_size):
+    """Takes a list with all sequences, creates vocabulary list and two dictionaries after tokenization, word to index
+       and index to word"""
+    tokenizer = Tokenizer(num_words=vocab_size)
     tokenizer.fit_on_texts(text_lists)
     dictionary = tokenizer.word_index
 
@@ -44,24 +40,19 @@ def vocab_creator(text_lists, VOCAB_SIZE):
     vocab = []
 
     for k, v in dictionary.items():
-        if v < VOCAB_SIZE:
+        if v < vocab_size:
             word2idx[k] = v
             idx2word[v] = k
             vocab.append(k)
 
-        if v >= VOCAB_SIZE - 1:
+        if v >= vocab_size - 1:
             continue
 
     return word2idx, idx2word, vocab
 
 
-word2idx, idx2word, vocab = vocab_creator(text, 10)
-print(word2idx, "\n", idx2word)
-print(f"vocab: {vocab}")
-
-
-def text2seq(encoder_text, decoder_text, VOCAB_SIZE):
-    tokenizer = Tokenizer(num_words=VOCAB_SIZE)
+def text2seq(encoder_text, decoder_text, vocab_size):
+    tokenizer = Tokenizer(num_words=vocab_size)
     tokenizer.fit_on_texts(encoder_text)
     tokenizer.fit_on_texts(decoder_text)
     encoder_sequences = tokenizer.texts_to_sequences(encoder_text)
@@ -69,34 +60,23 @@ def text2seq(encoder_text, decoder_text, VOCAB_SIZE):
 
     return encoder_sequences, decoder_sequences
 
-encoder_sequences, decoder_sequences = text2seq([cleaned_text], [cleaned_text], 50)
-print(f"encoder_sequences: {encoder_sequences} \n decoder_sequences: {decoder_sequences}")
 
-
-def padding(encoder_sequences, decoder_sequences, MAX_LEN):
-    encoder_input_data = pad_sequences(encoder_sequences, maxlen=MAX_LEN, dtype='int32', padding='post', truncating='post')
-    decoder_input_data = pad_sequences(decoder_sequences, maxlen=MAX_LEN, dtype='int32', padding='post', truncating='post')
+def padding(encoder_sequences, decoder_sequences, max_len):
+    encoder_input_data = pad_sequences(encoder_sequences, maxlen=max_len, dtype='int32', padding='post', truncating='post')
+    decoder_input_data = pad_sequences(decoder_sequences, maxlen=max_len, dtype='int32', padding='post', truncating='post')
 
     return encoder_input_data, decoder_input_data
 
 
-encoder_input_data, decoder_input_data = padding(encoder_sequences, decoder_sequences, 20)
-print(f"encoder_input_data:{encoder_input_data} \ndecoder_input_data:{decoder_input_data}")
-
-
-def create_embedding_matrix(vocab):
-    embedding_matrix = np.zeros((VOCAB_SIZE, EMBEDDING_DIM))
+def create_embedding_matrix(vocab, vocab_size, embedding_dim):
+    embedding_matrix = np.zeros((vocab_size, embedding_dim))
     for i, word in enumerate(vocab):
         embedding_matrix[i] = nlp(word).vector
     return embedding_matrix
 
 
-embedding_matrix = create_embedding_matrix(vocab)
-print(embedding_matrix[0])
-
-
-def create_decoder_output(decoder_input_data, num_samples, MAX_LEN, VOCAB_SIZE):
-    decoder_output_data = np.zeros((num_samples, MAX_LEN, VOCAB_SIZE), dtype="float32")
+def create_decoder_output(decoder_input_data, num_samples, max_len, vocab_size):
+    decoder_output_data = np.zeros((num_samples, max_len, vocab_size), dtype="float32")
 
     for i, seqs in enumerate(decoder_input_data):
         for j, seq in enumerate(seqs):
@@ -105,8 +85,3 @@ def create_decoder_output(decoder_input_data, num_samples, MAX_LEN, VOCAB_SIZE):
 
     return decoder_output_data
 
-
-decoder_output_data = create_decoder_output(decoder_input_data, len(encoder_sequences), MAX_LEN, 10)
-
-print(decoder_output_data.shape)
-print(len(vocab))
