@@ -1,13 +1,14 @@
 import ingest_data
 import preprocessing
+import numpy as np
 import model
 import os
 
 filepath = "data"
 all_files = os.walk(filepath)
-character_names = ["αλεξης", "νταλια", "αφηγητρια", "ζουμπουλια", "αννα", "μαριλενα", "λία",
-                   "ζουμπουλία", "άννα", "μαριλένα", "λια", "αλέξανδρος", "αβρααμ", "σταυριανιδης",
-                   "ελενα", "σπυρος", "θεοπούλα", "θεοπουλα", "λεονταριδης", "σοφια", "σοφία"]
+with open("saved_files/character_names.txt", "r") as f:
+    character_names = f.readlines()
+
 
 text_list = ingest_data.structure_files(all_files, filepath)
 clean_list = ingest_data.create_clean_list(text_list, character_names)
@@ -27,6 +28,7 @@ encoder_sequences, decoder_sequences = preprocessing.text2seq(encoder_text=X, de
 encoder_input_data, decoder_input_data = preprocessing.padding(encoder_sequences, decoder_sequences, MAX_LEN)
 embedding_matrix = preprocessing.create_embedding_matrix(vocab, VOCAB_SIZE, EMBEDDING_DIM)
 decoder_output_data = preprocessing.create_decoder_output(decoder_input_data, len(encoder_sequences), MAX_LEN, VOCAB_SIZE)
+decoder_output_data.astype(dtype="float32")
 
 embedding_layer = model.create_embedding_layer(VOCAB_SIZE, EMBEDDING_DIM, MAX_LEN, embedding_matrix)
 model = model.create_seq2seq_model(EMBEDDING_DIM, VOCAB_SIZE, MAX_LEN, embedding_layer)

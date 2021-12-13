@@ -76,7 +76,7 @@ def create_embedding_matrix(vocab, vocab_size, embedding_dim):
 
 
 def create_decoder_output(decoder_input_data, num_samples, max_len, vocab_size):
-    decoder_output_data = np.zeros((num_samples, max_len, vocab_size), dtype="float32")
+    decoder_output_data = np.zeros((num_samples, max_len, vocab_size), dtype="uint8")
 
     for i, seqs in enumerate(decoder_input_data):
         for j, seq in enumerate(seqs):
