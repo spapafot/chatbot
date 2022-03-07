@@ -5,7 +5,7 @@ Attempt to train a vanilla LSTM chatbot on a dataset of 50k greek subtitle pairs
 After standard preprocessing 
 
 1. Clean,
-2. Add <START> and <END> tags
+2. Add START and END tags
 3. Create vocabulary
 4. Tokenize
 5. Pad sequences 
